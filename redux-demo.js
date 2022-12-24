@@ -1,12 +1,23 @@
 const redux = require("redux"); // syntax for import redux package
 
 const counterReducer = (state = { counter: 0 }, action) => {
-  return {
-    counter: state.counter + 1,
-  };
+  if (action.type === "increment") {
+    return {
+      counter: state.counter + 1,
+    };
+  }
+
+  if (action.type === "decrement") {
+    return {
+      counter: state.counter - 1,
+    };
+  }
+  return state;
 };
 
 const createStore = redux.legacy_createStore(counterReducer); // That's a method exposed by Redux library, which does what the name implies, it create a store
+
+// console.log(createStore.getState());
 
 const counterSubscriber = () => {
   const latestState = createStore.getState();
@@ -15,6 +26,9 @@ const counterSubscriber = () => {
 };
 
 createStore.subscribe(counterSubscriber);
+
+createStore.dispatch({ type: "increment" });
+createStore.dispatch({ type: "decrement" });
 
 // const redux = require("redux");
 // const counterReducer = (state = { counter: 0 }, action) => {
@@ -52,5 +66,23 @@ createStore.subscribe(counterSubscriber);
 // 2.4 Now pass the counter subscriber to subscribe: "store.subscribe(counterSubscriber)". Important, we  don't execute "counterSubscriber" we just poin at it.
 // Both the counterSubscriber and counterReducer will be executed by Redux.
 // STEP: 3
-// When we run (node redux-demo.js) we'll see error, because we have no existing state because it's the first time this is executing. That's why we sould give state the state parameter a default value, which is assumed if it would otherwise be undefined: "const counterReducer = (state = { counter: 0 }, action)"
+// When we run (node redux-demo.js) we'll see error, because we have no existing state because it's the first time this is executing. That's why we sould give state the state parameter a default value, which is assumed if it would otherwise be undefined.
+// 3.1 Add "const counterReducer = (state = { counter: 0 }, action)"
+// It's works, but we don't see any output. The reason for this is that we do have a subsciption, but we haven't dispatched any actions yet. We only have initial initialization action kind of dispatched by Redux, but that does not trigger our subscription here "counterSubscriber"
+// 3.2 Add "console.log(createStore.getState());" we'll see { counter:1 } - this is our new states thereafter, after the initialization.
+// Instead, let's now create and dispatched an action.
+// 3.3 For this we again use that store object, and on that object besides get state and subscribe, we can call dispatch.
+// Dispatch is a method which diaspatches an action. Action is a JavaScript object with a type property, which acts as an identifier. Typically use a string here and then this should be a unique string, so that every action, every distinct action, which you dispatch leads to different things being done in the reducer. "createStore.dispatch({ type: "increment" })" - it's an ACTION!
 // ~~ CORE REDUX CONCEPTS ~~
+
+// ~~ REDUX BASICS ~~
+// When using Redux, the goal is to do different things inside of the reducer for different actions. And that's why you get the "action" as a second argument. You get a current "state" and then the "action" that was dispatched that caused the "counterReducer" to run.
+// In the "counterReducer" we can look into this "action".
+// STEP: 1
+// 1.1 We can add "ifcheck" the "if (action.type === "increment") {}" and if that's the case, then I wanna return increment counter (move "return{counter: state.counter+1}").
+// Otherwise, in a different action, like the default initialization "action" was dispatched, I wanna return the inchanged "return state".
+// Then we'll also change the value we have in our state, because now for the initialization, we ill not increment the counter, but return the unchanged default state. Then for the increment action, we will return the updated counter. With this change if we execute this file again, we now have {counter: 1}, because for the initialization, it's no longer incremented.
+// 1.2 We can also dispatched other actions. Let's add "createStore.dispatch({ type: "decrement" })"
+// 1.3 Then we just need to add the appropriate code: another "ifcheck" ("if(action.type === "decrement"){ return {counter: state.counter - 1} }").
+// 1.4 If we run we'll see: "{ counter: 1 }" and { counter: 0 }. First output is coming from our subscription after the "createStore.dispatch({ type: "increment" })". And then we change the state again, hence the subscription triggers again -> it's a second output "createStore.dispatch({ type: "decrement" })"
+// ~~ REDUX BASICS ~~
